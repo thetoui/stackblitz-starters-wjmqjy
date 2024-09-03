@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Feedback Form</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
+  </head>
+  <body>
+    <form id="feedbackForm">
+      <label>รหัสพนักงาน:</label>
+      <input type="number" id="employeeId" required />
+      <br />
+      <label>โรงงาน:</label>
+      <input type="radio" name="factory" value="โรงงานที่1" required />
+      โรงงานที่1
+      <input type="radio" name="factory" value="โรงงานที่2" /> โรงงานที่2
+      <input type="radio" name="factory" value="โรงงานที่3" /> โรงงานที่3
+      <input type="radio" name="factory" value="โรงงานโมลด์" /> โรงงานโมลด์
+      <br />
+      <label>ประเภทข้อคิดเห็นหรือร้องเรียน:</label>
+      <input type="radio" name="issueType" value="แสง" required /> แสง
+      <input type="radio" name="issueType" value="เสียง" /> เสียง
+      <input type="radio" name="issueType" value="ความร้อน" /> ความร้อน
+      <input type="radio" name="issueType" value="เคมี" /> เคมี
+      <br />
+      <label>รูปภาพที่พบปัญหา:</label>
+      <input type="file" id="issueImage" required />
+      <br />
+      <label>เมื่อดำเนินแจ้งกลับไปยังผู้ใด:</label>
+      <input type="text" id="reportTo" required />
+      <br />
+      <label>เบอร์ติดต่อ:</label>
+      <input type="number" id="contactNumber" required />
+      <br />
+      <button type="submit">ส่ง Feedback</button>
+    </form>
+
+    <script>
+      // Firebase configuration
+      const firebaseConfig = {
+        apiKey: 'AIzaSyCvoif0MHSKKOdXVYSbbt9VUHKDmDaNnFs',
+        authDomain: 'optimistic-keel-269608.firebaseapp.com',
+        projectId: 'optimistic-keel-269608',
+        storageBucket: 'optimistic-keel-269608.appspot.com',
+        messagingSenderId: '847422876070',
+        appId: '1:847422876070:web:338163db5b5e9d57e14767',
+      };
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.firestore();
+      const storage = firebase.storage();
+
+      // Handle form submission
+      document
+        .getElementById('feedbackForm')
+        .addEventListener('submit', async (e) => {
+          e.preventDefault();
+
+          const employeeId = document.getElementById('employeeId').value;
+          const factory = document.querySelector(
+            'input[name="factory"]:checked'
+          ).value;
+          const issueType = document.querySelector(
+            'input[name="issueType"]:checked'
+          ).value;
+          const reportTo = document.getElementById('reportTo').value;
+          const contactNumber = document.getElementById('contactNumber').value;
+          const issueImage = document.getElementById('issueImage').files[0];
+
+          // Upload image to Firebase Storage
+          const storageRef = storage.ref(
+            `issueImages/${Date.now()}_${issueImage.name}`
+          );
+          await storageRef.put(issueImage);
+          const issueImageUrl = await storageRef.getDownloadURL();
+
+          // Save feedback to Firestore
+          await db.collection('feedbacks').add({
+            employeeId,
+            factory,
+            issueType,
+            issueImageUrl,
+            reportTo,
+            contactNumber,
+            status: 'รับเรื่อง',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          });
+
+          alert('Feedback submitted successfully!');
+          document.getElementById('feedbackForm').reset();
+        });
+    </script>
+  </body>
+</html>

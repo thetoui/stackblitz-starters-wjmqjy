@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Admin Dashboard</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+  </head>
+  <body>
+    <h1>Feedback Management</h1>
+    <div id="feedbackList"></div>
+
+    <script>
+      const firebaseConfig = {
+        apiKey: 'AIzaSyCvoif0MHSKKOdXVYSbbt9VUHKDmDaNnFs',
+        authDomain: 'optimistic-keel-269608.firebaseapp.com',
+        projectId: 'optimistic-keel-269608',
+      };
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.firestore();
+
+      function loadFeedbacks() {
+        db.collection('feedbacks')
+          .orderBy('createdAt', 'desc')
+          .get()
+          .then((querySnapshot) => {
+            const feedbackList = document.getElementById('feedbackList');
+            feedbackList.innerHTML = '';
+            querySnapshot.forEach((doc) => {
+              const feedback = doc.data();
+              feedbackList.innerHTML += `
+            <div>
+              <p>รหัสพนักงาน: ${feedback.employeeId}</p>
+              <p>โรงงาน: ${feedback.factory}</p>
+              <p>ประเภท: ${feedback.issueType}</p>
+              <p>สถานะ: ${feedback.status}</p>
+              <button onclick="updateStatus('${doc.id}', 'ตรวจสอบแล้ว')">ตรวจสอบแล้ว</button>
+              <button onclick="updateStatus('${doc.id}', 'เสร็จสิ้น')">เสร็จสิ้น</button>
+              <button onclick="deleteFeedback('${doc.id}')">ลบ</button>
+            </div>
+          `;
+            });
+          });
+      }
+
+      function updateStatus(id, status) {
+        db.collection('feedbacks')
+          .doc(id)
+          .update({ status })
+          .then(() => {
+            loadFeedbacks();
+          });
+      }
+
+      function deleteFeedback(id) {
+        db.collection('feedbacks')
+          .doc(id)
+          .delete()
+          .then(() => {
+            loadFeedbacks();
+          });
+      }
+
+      loadFeedbacks();
+    </script>
+  </body>
+</html>
